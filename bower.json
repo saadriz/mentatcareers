@@ -1,0 +1,24 @@
+{
+  "name": "project",
+  "version": "0.0.1",
+  "authors": [
+    "Marwen Chrif <marouen.chrif@gmail.com>"
+  ],
+  "moduleType": [
+    "globals"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "^2.2.2",
+    "bootstrap": "^3.3.6",
+    "datatables.net": "^1.10.11",
+    "datatables.net-dt": "^1.10.11"
+  }
+}

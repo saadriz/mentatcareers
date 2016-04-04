@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>{% block title %}Welcome!{% endblock %}</title>
+        {% stylesheets
+            'components/bootstrap/dist/css/bootstrap.min.css'
+            'components/datatables.net-dt/css/jquery.dataTables.min.css'
+        %}
+            <link rel="stylesheet" href="{{ asset_url }}" type="text/css"/>
+        {% endstylesheets %}
+
+        <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}" />
+    </head>
+    <body class="container">
+        {% block body %}{% endblock %}
+        {% javascripts
+            'components/jquery/dist/jquery.min.js'
+            'components/bootstrap/dist/js/bootstrap.min.js'
+            'components/datatables.net/js/jquery.dataTables.min.js'
+            'bundles/app/js/list.js'
+        %}
+            <script type="text/javascript" src="{{ asset_url }}"></script>
+        {% endjavascripts %}
+    </body>
+</html>
