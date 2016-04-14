@@ -11,6 +11,7 @@ namespace AppBundle\Command;
 use AppBundle\Entity\Profile;
 use Doctrine\ORM\EntityManager;
 use Goutte\Client;
+use Monolog\Logger;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
@@ -23,6 +24,11 @@ class ImportFromIndeedCommand extends ContainerAwareCommand
      * @var EntityManager
      */
     private $em;
+
+    /**
+     * @var Logger
+     */
+    private $logger;
 
     /**
      * {@inheritDoc}
@@ -41,6 +47,7 @@ class ImportFromIndeedCommand extends ContainerAwareCommand
     {
         parent::initialize($input, $output);
         $this->em = $this->getContainer()->get('doctrine.orm.default_entity_manager');
+        $this->logger = $this->getContainer()->get('logger');
     }
 
     /**
@@ -58,50 +65,50 @@ class ImportFromIndeedCommand extends ContainerAwareCommand
 //            'remember' => '1'));
 
 //        while (true) {
-            try {
-                $profiles = [];
-                $searchKeys = [
-                    'gmail', 'e-mail', 'javascript', 'engineering', 'software', 'electrical', 'resume', 'email', 'mail', 'contact',
-                    'com', 'yahoo', '@gmail.com'
-                ];
+        try {
+            $this->logger->addInfo('Starting the scrapper command.');
+            $profiles = [];
+            $searchKeys = [
+                'gmail', 'e-mail', 'javascript', 'engineering', 'software', 'electrical', 'resume', 'email', 'mail', 'contact',
+                'com', 'yahoo', '@gmail.com'
+            ];
 
-                foreach ($searchKeys as $searchKey) {
-                    var_dump("Start searching with the Key : " . $searchKey);
-                    $baseUrl = 'http://www.indeed.com/resumes';
-                    if (strpos($searchKey, '-') >= 0 || strpos($searchKey, '.') >= 0) {
-                        $baseUrl .= '?q=' . $searchKey . '&co=US';
-                    } else {
-                        $baseUrl .= '/' . $searchKey . '?&co=US';
-                    }
-                    $start = 0;
-                    $hasMorePage = true;
-                    while ($hasMorePage) {
-                        $tmp = [];
-                        $url = $baseUrl . "&start=$start";
-                        $url = ltrim($url, "http://");
-                        $crawler = $client->request('GET', 'http://' . $url);
-                        $tmp = $crawler->filter('.app_link')->each(function ($node) {
-                            $url = $node->attr('href');
-                            $name = $node->text();
-                            return ["name" => $name, "link" => $url];
-                        });
-
-                        if (count($tmp) > 0) {
-                            $profiles = array_merge($profiles, $tmp);
-                            $start += 50;
-                        } else {
-                            $hasMorePage = false;
-                        }
-                    };
-                    var_dump('Current profiles count : ' . count($profiles));
+            foreach ($searchKeys as $searchKey) {
+                var_dump("Start searching with the Key : " . $searchKey);
+                $baseUrl = 'http://www.indeed.com/resumes';
+                if (strpos($searchKey, '-') >= 0 || strpos($searchKey, '.') >= 0) {
+                    $baseUrl .= '?q=' . $searchKey . '&co=US';
+                } else {
+                    $baseUrl .= '/' . $searchKey . '?&co=US';
                 }
+                $start = 0;
+                $hasMorePage = true;
+                while ($hasMorePage) {
+                    $tmp = [];
+                    $url = $baseUrl . "&start=$start";
+                    $url = ltrim($url, "http://");
+                    $crawler = $client->request('GET', 'http://' . $url);
+                    $tmp = $crawler->filter('.app_link')->each(function ($node) {
+                        $url = $node->attr('href');
+                        $name = $node->text();
+                        return ["name" => $name, "link" => $url];
+                    });
 
-                var_dump(count($profiles) . ' profile ');
-
-                $progress = new ProgressBar($output, count($profiles));
-                foreach ($profiles as $_profile) {
-                    var_dump($_profile['name']);
-                    $crawler = $client->request('GET', 'http://www.indeed.com' . $_profile['link']);
+                    if (count($tmp) > 0) {
+                        $profiles = array_merge($profiles, $tmp);
+                        $start += 50;
+                    } else {
+                        $hasMorePage = false;
+                    }
+                };
+                $this->logger->addInfo('Current profiles count : ' . count($profiles));
+            }
+            $this->logger->addInfo(count($profiles) . ' profile ');
+            $progress = new ProgressBar($output, count($profiles));
+            foreach ($profiles as $_profile) {
+                var_dump($_profile['name']);
+                $crawler = $client->request('GET', 'http://www.indeed.com' . $_profile['link']);
+                if (!is_null($crawler)) {
                     $content = $crawler->filter('#resume_body')->each(function ($node) {
                         $content = $node->html();
                         $emails = extract_email_address($content);
@@ -124,7 +131,7 @@ class ImportFromIndeedCommand extends ContainerAwareCommand
                                 ->setResumeScrapped($resumeScrapped);
                             $this->em->persist($profile);
                         } else {
-                            if(count($email) > 0) {
+                            if (count($email) > 0) {
                                 $existing->setEmail($email);
                             }
                         }
@@ -137,19 +144,22 @@ class ImportFromIndeedCommand extends ContainerAwareCommand
                                 ->setResumeScrapped('');
                             $this->em->persist($profile);
                         } else {
-                            if(count($email) > 0) {
+                            if (count($email) > 0) {
                                 $existing->setEmail($email);
                             }
                         }
                     }
                     $this->em->flush();
                     $progress->advance();
+                    $this->logger->info('Profile imported.');
                 }
-                $progress->finish();
-            } catch (\Exception $e) {
-                $output->writeln($e->getMessage());
             }
-            sleep(3600);
+            $progress->finish();
+            $this->logger->addError('Scrapper command finished with success.');
+        } catch (\Exception $e) {
+            $this->logger->addError($e->getMessage());
+            $output->writeln($e->getMessage());
+        }
 //        }
     }
 }
