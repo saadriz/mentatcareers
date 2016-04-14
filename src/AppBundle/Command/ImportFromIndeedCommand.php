@@ -114,6 +114,7 @@ class ImportFromIndeedCommand extends ContainerAwareCommand
                         $emails = extract_email_address($content);
                         return ['email' => $emails, 'content' => $content];
                     });
+                    $profile = null;
                     $existing = $this->em->getRepository('AppBundle:Profile')->findOneBy(['name' => $_profile['name']]);
                     if (count($content) > 0 /*&& count($content[0]['email']) > 0*/) {
                         $content = $content[0];
@@ -150,6 +151,9 @@ class ImportFromIndeedCommand extends ContainerAwareCommand
                         }
                     }
                     $this->em->flush();
+                    if(!is_null($profile)) {
+                        $this->em->clear($profile);
+                    }
                     $progress->advance();
                     $this->logger->info('Profile imported.');
                 }
