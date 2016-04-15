@@ -101,7 +101,8 @@ class ImportFromIndeedCommand extends ContainerAwareCommand
                         $hasMorePage = false;
                     }
                 };
-                $this->logger->addInfo('Current profiles count : ' . count($profiles));
+                $this->logger->addInfo('Current profiles count => ' . $searchKey . ' : '  . count($profiles));
+		sleep(500);
             }
             $this->logger->addInfo(count($profiles) . ' profile ');
             $progress = new ProgressBar($output, count($profiles));
@@ -116,7 +117,7 @@ class ImportFromIndeedCommand extends ContainerAwareCommand
                     });
                     $profile = null;
                     $existing = $this->em->getRepository('AppBundle:Profile')->findOneBy(['name' => $_profile['name']]);
-                    if (count($content) > 0 /*&& count($content[0]['email']) > 0*/) {
+                    if (count($content) > 0) {
                         $content = $content[0];
                         $email = $content['email'];
                         if (count($email) === 0) {
@@ -155,11 +156,12 @@ class ImportFromIndeedCommand extends ContainerAwareCommand
                         $this->em->clear($profile);
                     }
                     $progress->advance();
-                    $this->logger->info('Profile imported.');
+                    $this->logger->addInfo('Profile imported.');
+ 		    sleep(120);
                 }
             }
             $progress->finish();
-            $this->logger->addError('Scrapper command finished with success.');
+            $this->logger->addInfo('Scrapper command finished with success.');
         } catch (\Exception $e) {
             $this->logger->addError($e->getMessage());
             $output->writeln($e->getMessage());
