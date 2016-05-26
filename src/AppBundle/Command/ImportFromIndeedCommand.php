@@ -102,7 +102,7 @@ class ImportFromIndeedCommand extends ContainerAwareCommand
                     }
                 };
                 $this->logger->addInfo('Current profiles count => ' . $searchKey . ' : '  . count($profiles));
-		sleep(500);
+		sleep(60);
             }
             $this->logger->addInfo(count($profiles) . ' profile ');
             $progress = new ProgressBar($output, count($profiles));
@@ -157,7 +157,7 @@ class ImportFromIndeedCommand extends ContainerAwareCommand
                     }
                     $progress->advance();
                     $this->logger->addInfo('Profile imported.');
- 		    sleep(120);
+ 		    sleep(10);
                 }
             }
             $progress->finish();
