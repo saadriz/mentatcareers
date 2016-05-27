@@ -70,16 +70,15 @@ class ImportFromIndeedCommand extends ContainerAwareCommand
             $profiles = [];
             $searchKeys = [
                 'gmail', 'e-mail', 'javascript', 'engineering', 'software', 'electrical', 'resume', 'email', 'mail', 'contact',
-                'com', 'yahoo', '@gmail.com'
+                'com', 'yahoo', '@gmail.com', ''
             ];
-
             foreach ($searchKeys as $searchKey) {
                 var_dump("Start searching with the Key : " . $searchKey);
                 $baseUrl = 'http://www.indeed.com/resumes';
                 if (strpos($searchKey, '-') >= 0 || strpos($searchKey, '.') >= 0) {
-                    $baseUrl .= '?q=' . $searchKey . '&co=US';
+                    $baseUrl .= '?q=' . $searchKey /*. '&co=US'*/;
                 } else {
-                    $baseUrl .= '/' . $searchKey . '?&co=US';
+                    $baseUrl .= '/' . $searchKey /*. '?&co=US'*/;
                 }
                 $start = 0;
                 $hasMorePage = true;
@@ -93,7 +92,6 @@ class ImportFromIndeedCommand extends ContainerAwareCommand
                         $name = $node->text();
                         return ["name" => $name, "link" => $url];
                     });
-
                     if (count($tmp) > 0) {
                         $profiles = array_merge($profiles, $tmp);
                         $start += 50;
